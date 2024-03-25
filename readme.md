@@ -1,5 +1,7 @@
 # Discoed
 
+<p align="center"><image src="https://raw.githubusercontent.com/ionutrogojan/discoed/main/discoed.png" width=256px/></p>
+
 > [!NOTE]
 > This script only works on manually installed Discord using the `.tar.gz` option
 
