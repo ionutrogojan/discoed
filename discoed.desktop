@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Discoed
+StartupWMClass=discoed
+Comment=Auto-update and Launches Discord for you
+GenericName=Internet Messenger
+Exec=./discoed.sh
+Icon=./discoed.png
+Type=Application
+Categories=Network;InstantMessaging;
+
+# Replace the paths with your location
