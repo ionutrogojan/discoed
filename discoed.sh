@@ -8,20 +8,33 @@ DOWNLOADS_PATH="$HOME/Downloads" # your desired download location ; The archive 
 DISCORD_BUILD_INFO="$INSTALL_PATH/Discord/resources/build_info.json"
 DISCORD_API="https://discord.com/api/updates/$DISCORD_BRANCH?platform=linux"
 DISCORD_DOWNLOAD="https://discord.com/api/download?platform=linux&format=tar.gz"
-
 DESKTOP_LINKS_PATH="$HOME/.local/share/applications"
+CWD=$(dirname $(realpath "$0"))
+
+log_data() {
+	DATA="$1"
+	NOW=$(date "+%d-%m-%Y %H:%M")
+	printf "[%s] %s\n" "$NOW" "$DATA" >> "$CWD/discoed.log"
+}
 
 install_discord() {
 	if [ ! -d "$DOWNLOADS_PATH" ]; then
-		printf "\33[1;35m[ERROR]\33[0m \$DOWNLOADS_PATH does not exist at the specified path\n"
+		ERROR="\$DOWNLOADS_PATH does not exist at the specified path"
+		printf "\33[1;35m[ERROR]\33[0m %s\n" "$ERROR"
+		log_data "<ERROR> $ERROR"
+		xdg-open "$CWD/discoed.log"
 		xdg-open "$0"
 		exit 1
 	fi
 	if [ ! -d "$INSTALL_PATH" ]; then
-		printf "\33[1;35m[ERROR]\33[0m \$DISCORD_PATH does not exist at the specified path\n"
+		ERROR="\$INSTALL_PATH does not exist at the specified path"
+		printf "\33[1;35m[ERROR]\33[0m %s\n" "$ERROR"
+		log_data "<ERROR> $ERROR"
+		xdg-open "$CWD/discoed.log"
 		xdg-open "$0"
 		exit 1
 	fi
+# TODO: check if all of these exit succesfully and log the errors if not
 # ----> Download Discord
 	DISCORD_TAR="$DOWNLOADS_PATH/discord-$EXTRN_VERSION.tar.gz"
 	wget -O $DISCORD_TAR $DISCORD_DOWNLOAD
@@ -29,11 +42,15 @@ install_discord() {
 	tar -xzf $DISCORD_TAR --overwrite -C $INSTALL_PATH
 # ----> Remove Tar
 	rm -rf $DISCORD_TAR
+	log_data "<INFO> Discord updated to the latest version $EXTRN_VERSION"
 }
 
 run_discord() {
 	if [ ! -e "$INSTALL_PATH/Discord/Discord" ]; then
-		printf "\33[1;35m[ERROR]\33[0m \$INSTALL_PATH does not exist at the specified path\n"
+		ERROR="Discord executable does not exist at the specified path"
+		printf "\33[1;35m[ERROR]\33[0m %s\n" "$ERROR"
+		log_data "<ERROR> $ERROR"
+		xdg-open "$CWD/discoed.log"
 		xdg-open "$0"
 		exit 1
 	fi
@@ -43,14 +60,24 @@ run_discord() {
 }
 
 # ----> Find Desktop Link
-if [ ! -f $"$DESKTOP_LINKS_PATH/discoed.desktop" ]; then
-	printf "\33[1;35m[ERROR]\33[0m Missing 'discoed.desktop' link from quick launcher\n"
-	# get current directory
-	# copy .desk to ../applications
-	# edit the values with the current_working_directory .sh and .png
-	# print created quick launcher link
-	xdg-open "$DESKTOP_LINKS_PATH"
-	exit 1
+if [ ! -f "$DESKTOP_LINKS_PATH/discoed.desktop" ]; then
+	MESSAGE="Missing 'discoed.desktop' link from quick launcher"
+	printf "[INFO] %s\n" "$MESSAGE"
+	log_data "<INFO> $MESSAGE"
+# ----> Copy Desktop Link
+	cp "$CWD/discoed.desktop" "$DESKTOP_LINKS_PATH"
+# ----> Check Path	
+	if [ ! -f "$DESKTOP_LINKS_PATH/discoed.desktop" ]; then
+		log_data "<ERROR> Falied to create desktop link"
+		xdg-open "$CWD/discoed.log"
+		exit 1
+	fi
+	MESSAGE="Desktop link created successfully"
+	printf "[INFO] %s\n" "$MESSAGE"
+	log_data "<INFO> %s" "$MESSAGE"
+# ----> Update Desktop Link
+	sed -i "s|{discoed.sh}|$CWD/discoed.sh|g" "$DESKTOP_LINKS_PATH/discoed.desktop"
+	sed -i "s|{discoed.png}|$CWD/discoed.png|g" "$DESKTOP_LINKS_PATH/discoed.desktop"
 fi
 
 # ----> Web Server Query
@@ -68,9 +95,11 @@ printf "[INFO] Client Build Version: %s\n" $LOCAL_VERSION
 
 # ----> Compare Values
 if [[ $LOCAL_VERSION = $EXTRN_VERSION ]]; then
-	printf "\33[1;36m[STATUS]\33[0m Up to date\n"
+	printf "\33[1;36m[INFO]\33[0m Up to date\n"
 else
-	printf "\33[1;33m[STATUS]\33[0m \33[1;35m<!>\33[0m Update needed\n"
+	MESSAGE="Update needed"
+	printf "\33[1;33m[WARN]\33[0m \33[1;35m<!>\33[0m %s\n" "$MESSAGE"
+	log_data "<WARN> $MESSAGE $LOCAL_VERSION >> $EXTRN_VERSION"
 	install_discord
 fi
 
